@@ -1,0 +1,10 @@
+[
+    {
+        "timestamp": "2026-11-21T18:25:40.108154",
+        "agent_id": "cloud_management_agent",
+        "action": "delete_server",
+        "resource": "backup_server",
+        "decision": "BLOCK",
+        "explanation": "Protected backup."
+    }
+]

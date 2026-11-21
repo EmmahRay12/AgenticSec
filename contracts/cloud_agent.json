@@ -1,0 +1,13 @@
+{
+  "agent_id": "cloud_management_agent",
+  "agent_name": "Cloud Management Agent",
+  "agent_type": "simulated",
+  "objective": "Reduce cloud operating costs.",
+  "permissions": [
+    { "action": "list_servers", "resource": "cloud_inventory" },
+    { "action": "delete_server", "resource": "noncritical_server" }
+  ],
+  "restrictions": [
+    { "action": "delete_server", "resource": "backup_server", "reason": "Protected backup." }
+  ]
+}

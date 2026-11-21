@@ -1,9 +1,10 @@
 """
 AgenticSec — FastAPI application serving the dashboard and governance API.
 """
+import os
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
-from fastAPI.responses import HTMLResponse
+from fastapi.responses import HTMLResponse, FileResponse
 from pydantic import BaseModel
 from datetime import datetime
 
@@ -18,7 +19,7 @@ BASE_DIR = Path(__file__).parent
 
 app = FastAPI(title="AgenticSec")
 
-# Temporary memory storage for Vercel (Serverless)
+# Temporary memory storage for Vercel (Serverless environment)
 TEMP_LOGS = []
 
 class EvaluateRequest(BaseModel):
@@ -30,11 +31,11 @@ class EvaluateRequest(BaseModel):
 
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
-    """Serve the dashboard HTML."""
-    html_path = BASE_DIR / "templates" / "index.html"
-    if not html_path.exists():
-        return HTMLResponse("<h1>templates/index.html not found</h1>", status_code=500)
-    return HTMLResponse(html_path.read_text(encoding="utf-8"))
+    """Serve the dashboard HTML using absolute paths for Vercel compatibility."""
+    html_path = os.path.join(BASE_DIR, "templates", "index.html")
+    if not os.path.exists(html_path):
+        return HTMLResponse("<h1>Error: templates/index.html not found</h1>", status_code=404)
+    return FileResponse(html_path)
 
 
 @app.get("/api/health")
@@ -81,7 +82,7 @@ async def evaluate(req: EvaluateRequest):
     # Stage 4: Decision Engine
     final_result = make_decision(contract_result, context_result, impact_result)
 
-    # Save to Local File (For local environment)
+    # Save to Local File (Safely checks for Vercel environment)
     log_decision(
         agent_id=req.agent_id,
         action=req.action,
@@ -90,7 +91,7 @@ async def evaluate(req: EvaluateRequest):
         explanation=final_result["explanation"]
     )
 
-    # Save to Temporary Memory (For Vercel Serverless environment)
+    # Save to Temporary Memory (For Vercel Serverless)
     TEMP_LOGS.append({
         "timestamp": datetime.now().isoformat(),
         "agent_id": req.agent_id,
@@ -117,12 +118,9 @@ async def evaluate(req: EvaluateRequest):
 
 @app.get("/api/audit")
 async def get_audit():
-    """Fetch real audit logs from Memory or Local File."""
-    # If running on Vercel, TEMP_LOGS will have data
+    """Fetch real audit logs from memory (Vercel) or file (Local)."""
     if TEMP_LOGS:
         return {"records": TEMP_LOGS}
-    
-    # Fallback to local file if running locally
     return {"records": get_all_logs()}
 
 

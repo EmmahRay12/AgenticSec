@@ -3,8 +3,9 @@ AgenticSec — FastAPI application serving the dashboard and governance API.
 """
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse
+from fastAPI.responses import HTMLResponse
 from pydantic import BaseModel
+from datetime import datetime
 
 # Import Engine Components
 from engine.contract_validator import load_contracts, validate_action
@@ -16,6 +17,9 @@ from storage.audit_logger import log_decision, get_all_logs
 BASE_DIR = Path(__file__).parent
 
 app = FastAPI(title="AgenticSec")
+
+# Temporary memory storage for Vercel (Serverless)
+TEMP_LOGS = []
 
 class EvaluateRequest(BaseModel):
     agent_id: str
@@ -65,19 +69,19 @@ async def evaluate(req: EvaluateRequest):
     if contract is None:
         raise HTTPException(status_code=404, detail=f"Unknown agent: {req.agent_id}")
 
-    # Stage 1: Contract Validator (Restrictions first, then Permissions)
+    # Stage 1: Contract Validator
     contract_result = validate_action(contract, req.action, req.resource)
     
-    # Stage 2: Context Analyzer (Is the resource sensitive?)
+    # Stage 2: Context Analyzer
     context_result = analyze_context(req.action, req.resource)
     
-    # Stage 3: Impact Assessor (Is it destructive/irreversible?)
+    # Stage 3: Impact Assessor
     impact_result = assess_impact(req.action, req.resource)
     
-    # Stage 4: Decision Engine (Combines all 3 stages)
+    # Stage 4: Decision Engine
     final_result = make_decision(contract_result, context_result, impact_result)
 
-    # Save to Audit Log
+    # Save to Local File (For local environment)
     log_decision(
         agent_id=req.agent_id,
         action=req.action,
@@ -85,6 +89,16 @@ async def evaluate(req: EvaluateRequest):
         decision=final_result["decision"],
         explanation=final_result["explanation"]
     )
+
+    # Save to Temporary Memory (For Vercel Serverless environment)
+    TEMP_LOGS.append({
+        "timestamp": datetime.now().isoformat(),
+        "agent_id": req.agent_id,
+        "action": req.action,
+        "resource": req.resource,
+        "decision": final_result["decision"],
+        "explanation": final_result["explanation"]
+    })
 
     return {
         "agent_id": req.agent_id,
@@ -103,7 +117,12 @@ async def evaluate(req: EvaluateRequest):
 
 @app.get("/api/audit")
 async def get_audit():
-    """Fetch real audit logs."""
+    """Fetch real audit logs from Memory or Local File."""
+    # If running on Vercel, TEMP_LOGS will have data
+    if TEMP_LOGS:
+        return {"records": TEMP_LOGS}
+    
+    # Fallback to local file if running locally
     return {"records": get_all_logs()}
 
 

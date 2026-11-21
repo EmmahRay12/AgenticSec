@@ -4,13 +4,18 @@
 AgenticSec is a lightweight, deterministic governance layer that sits between autonomous AI agents and the actions they propose. Before any action is executed, it checks the agent's operating contract, assesses context and impact, and returns a decision: **ALLOW**, **HUMAN REVIEW**, or **BLOCK**.
 
 ## 🚀 Live Demo
-👉 **[https://agentic-sec-445t.vercel.app](https://agentic-sec-445t.vercel.app)**
+👉 **[Click here to view the Live Dashboard](https://agentic-linmbztrq-emmahray12.vercel.app)**
+*(Note: This is deployed on Vercel's serverless free tier. If it takes a few seconds to load the first time, please wait.)*
+
+## 🎥 Demo Video
+👉 **[Watch the 1-minute Demo Video](YOUR_YOUTUBE_LINK_HERE)**
+*(Aap video banane ke baad yahan YouTube ka link daal dena)*
 
 ## 🛠️ Tech Stack
 - **Frontend:** HTML, CSS, Vanilla JavaScript (Custom Dark Dashboard UI)
 - **Backend:** Python, FastAPI
 - **Deployment:** Vercel (Serverless Architecture)
-- **Storage:** JSON-based local audit logging (Simulated for serverless)
+- **Storage:** In-memory audit logging (Simulated for serverless environment)
 
 ## ⚙️ The 5-Stage Governance Pipeline
 1. **Contract Validator:** Checks explicit permissions and restrictions (Restrictions always take priority).
@@ -24,14 +29,6 @@ You can test these in the **Action Evaluation** tab:
 - `delete_server — backup_server` ➔ **BLOCK** (Protected by restriction)
 - `delete_server — noncritical_server` ➔ **HUMAN REVIEW** (Destructive action, but allowed)
 - `list_servers — cloud_inventory` ➔ **ALLOW** (Safe read-only action)
-- `read_internal_records — internal_database` ➔ **BLOCK** (Unauthorized resource)
 
-## 💻 Local Setup
-If you want to run this project locally:
-```bash
-git clone https://github.com/EmmahRay12/AgenticSec.git
-cd AgenticSec
-python -m venv venv
-# Windows: .\venv\Scripts\activate | Mac/Linux: source venv/bin/activate
-pip install -r requirements.txt
-uvicorn app:app --reload
+## ⚠️ Limitations
+This is a hackathon educational prototype. It evaluates observable actions and does not read an agent's internal intentions. It is not a production security system.

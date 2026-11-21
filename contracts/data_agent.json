@@ -1,0 +1,15 @@
+{
+  "agent_id": "data_management_agent",
+  "agent_name": "Data Management Agent",
+  "agent_type": "simulated",
+  "objective": "Organize and clean approved datasets.",
+  "permissions": [
+    { "action": "clean_dataset", "resource": "approved_dataset" },
+    { "action": "read_dataset", "resource": "approved_dataset" },
+    { "action": "generate_report", "resource": "approved_dataset" }
+  ],
+  "restrictions": [
+    { "action": "delete_dataset", "resource": "source_dataset", "reason": "Must not delete original source datasets." },
+    { "action": "export_customer_data", "resource": "*", "reason": "Must not export customer data." }
+  ]
+}

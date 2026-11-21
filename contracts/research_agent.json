@@ -1,0 +1,14 @@
+{
+  "agent_id": "research_agent",
+  "agent_name": "Research Agent",
+  "agent_type": "simulated",
+  "objective": "Collect and summarize public cybersecurity information.",
+  "permissions": [
+    { "action": "read_public_report", "resource": "public_reports" },
+    { "action": "summarize_report", "resource": "public_reports" }
+  ],
+  "restrictions": [
+    { "action": "read_internal_records", "resource": "internal_database", "reason": "Must not read confidential internal records." },
+    { "action": "modify_server", "resource": "*", "reason": "Must not modify servers." }
+  ]
+}

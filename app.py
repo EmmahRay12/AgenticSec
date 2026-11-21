@@ -4,7 +4,6 @@ AgenticSec — FastAPI application serving the dashboard and governance API.
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
 from fastapi.responses import HTMLResponse
-from fastapi.staticfiles import StaticFiles
 from pydantic import BaseModel
 
 # Import Engine Components
@@ -17,8 +16,6 @@ from storage.audit_logger import log_decision, get_all_logs
 BASE_DIR = Path(__file__).parent
 
 app = FastAPI(title="AgenticSec")
-app.mount("/static", StaticFiles(directory=str(BASE_DIR / "static")), name="static")
-
 
 class EvaluateRequest(BaseModel):
     agent_id: str
@@ -112,11 +109,11 @@ async def get_audit():
 
 @app.get("/api/approvals")
 async def get_approvals():
-    # TODO: Read from audit logs where decision is HUMAN REVIEW
+    """Fetch pending approvals (Not implemented yet)."""
     return {"approvals": []}
 
 
 @app.post("/api/approvals/action")
 async def approval_action(req: dict):
-    # TODO: Handle approve/deny logic
+    """Handle approval actions (Not implemented yet)."""
     return {"ok": True}

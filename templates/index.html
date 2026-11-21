@@ -1160,7 +1160,7 @@ $('#runEvalBtn').addEventListener('click', async () => {
   } catch (error) {
     vb.textContent = 'ERROR';
     vb.style.color = 'var(--coral)';
-    $('#verdictWhy').textContent = 'Backend se response nahi mila.';
+    $('#verdictWhy').textContent = 'Failed to fetch response from backend. Please check server logs.';
     toast('Evaluation failed', 'bad');
     console.error(error);
   }

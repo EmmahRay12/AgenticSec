@@ -1,14 +1,10 @@
-"""
-AgenticSec — FastAPI application serving the dashboard and governance API.
-"""
 import os
 from pathlib import Path
 from fastapi import FastAPI, HTTPException
-from fastapi.responses import HTMLResponse, FileResponse
+from fastapi.responses import FileResponse, HTMLResponse
 from pydantic import BaseModel
 from datetime import datetime
 
-# Import Engine Components
 from engine.contract_validator import load_contracts, validate_action
 from engine.context_analyzer import analyze_context
 from engine.impact_assessor import assess_impact
@@ -16,10 +12,7 @@ from engine.decision_engine import make_decision
 from storage.audit_logger import log_decision, get_all_logs
 
 BASE_DIR = Path(__file__).parent
-
 app = FastAPI(title="AgenticSec")
-
-# Temporary memory storage for Vercel (Serverless environment)
 TEMP_LOGS = []
 
 class EvaluateRequest(BaseModel):
@@ -28,25 +21,19 @@ class EvaluateRequest(BaseModel):
     resource: str
     reason: str = ""
 
-
 @app.get("/", response_class=HTMLResponse)
 async def dashboard():
-    """Serve the dashboard HTML using absolute paths for Vercel compatibility."""
     html_path = os.path.join(BASE_DIR, "templates", "index.html")
     if not os.path.exists(html_path):
-        return HTMLResponse("<h1>Error: templates/index.html not found</h1>", status_code=404)
+        return HTMLResponse("<h1>index.html not found</h1>", status_code=404)
     return FileResponse(html_path)
-
 
 @app.get("/api/health")
 async def health():
-    """Health check endpoint."""
     return {"status": "ok", "contracts_loaded": len(load_contracts())}
-
 
 @app.get("/api/agents")
 async def get_agents():
-    """Fetch list of all registered agents."""
     contracts = load_contracts()
     agents_list = []
     for agent_id, c in contracts.items():
@@ -60,38 +47,20 @@ async def get_agents():
         })
     return {"agents": agents_list}
 
-
 @app.post("/api/evaluate")
 async def evaluate(req: EvaluateRequest):
-    """Evaluate an action based on agent contract, context, and impact."""
     contracts = load_contracts()
     contract = contracts.get(req.agent_id)
-    
     if contract is None:
         raise HTTPException(status_code=404, detail=f"Unknown agent: {req.agent_id}")
 
-    # Stage 1: Contract Validator
     contract_result = validate_action(contract, req.action, req.resource)
-    
-    # Stage 2: Context Analyzer
     context_result = analyze_context(req.action, req.resource)
-    
-    # Stage 3: Impact Assessor
     impact_result = assess_impact(req.action, req.resource)
-    
-    # Stage 4: Decision Engine
     final_result = make_decision(contract_result, context_result, impact_result)
 
-    # Save to Local File (Safely checks for Vercel environment)
-    log_decision(
-        agent_id=req.agent_id,
-        action=req.action,
-        resource=req.resource,
-        decision=final_result["decision"],
-        explanation=final_result["explanation"]
-    )
-
-    # Save to Temporary Memory (For Vercel Serverless)
+    log_decision(req.agent_id, req.action, req.resource, final_result["decision"], final_result["explanation"])
+    
     TEMP_LOGS.append({
         "timestamp": datetime.now().isoformat(),
         "agent_id": req.agent_id,
@@ -107,30 +76,15 @@ async def evaluate(req: EvaluateRequest):
         "resource": req.resource,
         "decision": final_result["decision"],
         "explanation": final_result["explanation"],
-        "stages": {
-            "contract": contract_result,
-            "context": context_result,
-            "impact": impact_result
-        },
-        "source": "simulated",
+        "source": "simulated"
     }
-
 
 @app.get("/api/audit")
 async def get_audit():
-    """Fetch real audit logs from memory (Vercel) or file (Local)."""
     if TEMP_LOGS:
         return {"records": TEMP_LOGS}
     return {"records": get_all_logs()}
 
-
 @app.get("/api/approvals")
 async def get_approvals():
-    """Fetch pending approvals (Not implemented yet)."""
     return {"approvals": []}
-
-
-@app.post("/api/approvals/action")
-async def approval_action(req: dict):
-    """Handle approval actions (Not implemented yet)."""
-    return {"ok": True}

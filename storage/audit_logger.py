@@ -1,11 +1,11 @@
 import json
+import os
 from pathlib import Path
 from datetime import datetime
 
 AUDIT_FILE = Path(__file__).parent.parent / "audit_log.json"
 
 def log_decision(agent_id: str, action: str, resource: str, decision: str, explanation: str):
-    """Saves the evaluation result to a JSON file."""
     record = {
         "timestamp": datetime.now().isoformat(),
         "agent_id": agent_id,
@@ -15,7 +15,11 @@ def log_decision(agent_id: str, action: str, resource: str, decision: str, expla
         "explanation": explanation
     }
     
-    # Load existing logs
+    # Vercel has a read-only filesystem. We cannot write files there.
+    if os.environ.get("VERCEL"):
+        print(f"[AUDIT LOG] {record}")
+        return
+
     logs = []
     if AUDIT_FILE.exists():
         try:
@@ -24,15 +28,15 @@ def log_decision(agent_id: str, action: str, resource: str, decision: str, expla
         except json.JSONDecodeError:
             logs = []
             
-    # Append new log
     logs.append(record)
     
-    # Save back to file
     with open(AUDIT_FILE, "w", encoding="utf-8") as f:
         json.dump(logs, f, indent=4)
 
 def get_all_logs():
-    """Returns all saved audit logs."""
+    if os.environ.get("VERCEL"):
+        return []
+        
     if not AUDIT_FILE.exists():
         return []
     with open(AUDIT_FILE, "r", encoding="utf-8") as f:
